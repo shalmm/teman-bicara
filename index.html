@@ -791,10 +791,11 @@ async function startVoiceCall(){
     });
     meter();
     return;
-   }catch(e){ lastErr=e; session=null; }
+   }catch(e){ lastErr=e; session=null; if(/quota|credit/i.test(e&&e.message||""))break; }
   }
   setLive("idle");
   const detail=lastErr&&(lastErr.message||lastErr.name||String(lastErr))||"unknown";
+  if(/quota|credit/i.test(detail)){caption("sys","Tutor sedang tidak tersedia karena kuota suara habis. Coba lagi nanti, atau hubungi pemilik aplikasi.");return}
   caption("sys","Tidak bisa terhubung ke tutor. Periksa internet lalu coba lagi. (Info teknis: "+detail.slice(0,140)+")");
 }
 function meter(){if(!session)return;try{const v=session.getInputVolume?session.getInputVolume():0;const o=session.getOutputVolume?session.getOutputVolume():0;$("#selfInitial").style.boxShadow=`0 0 0 ${Math.round(v*18)}px rgba(61,188,159,.35)`;face.level(o*2.4);face.listen(o>0.02?0:v)}catch(e){}requestAnimationFrame(meter)}
