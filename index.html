@@ -319,7 +319,7 @@ canvas.face{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;di
 /* ---------- config ---------- */
 const AGENT_ID = "agent_1201m55607eafs9vaysnpmn39dry";
 const TALK_LINK = "https://elevenlabs.io/app/talk-to?agent_id=" + AGENT_ID;
-const SDK_URL = "https://unpkg.com/@elevenlabs/client@1.26.0/dist/lib.iife.js";
+const SDK_URL = (location.protocol==="https:" && /github\.io$/.test(location.hostname)) ? "elevenlabs-client.js" : "https://unpkg.com/@elevenlabs/client@1.26.0/dist/lib.iife.js";
 const IN_ARTIFACT = !!(window.claude && typeof window.claude.use === "function");
 
 /* ---------- curriculum ---------- */
@@ -760,12 +760,28 @@ $("#muteBtn").onclick=()=>{if(!session)return;muted=!muted;try{session.setMicMut
 
 /* voice call (standalone app with ElevenLabs) */
 function loadSDK(){return new Promise((res,rej)=>{if(window.ElevenLabsClient)return res(window.ElevenLabsClient);const s=document.createElement("script");s.src=SDK_URL;s.onload=()=>res(window.ElevenLabsClient);s.onerror=()=>rej(new Error("sdk"));document.head.append(s)})}
+let sdkPromise=null;
+if(!IN_ARTIFACT){sdkPromise=loadSDK().catch(()=>null)}
 async function startVoiceCall(){
   setLive("connecting"); caption("sys","Menghubungkan ke tutor…");
+  /* iPhone Safari only grants the mic if it is asked for right away, inside the tap. */
   try{
-    const EL=await loadSDK();
+    const probe=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+    probe.getTracks().forEach(t=>t.stop());
+  }catch(e){
+    setLive("idle");
+    caption("sys", e&&e.name==="NotAllowedError"
+      ? "Mikrofon belum diizinkan. Di iPhone: buka Pengaturan › Safari › Mikrofon, pilih Izinkan, lalu muat ulang halaman ini."
+      : "Mikrofon tidak bisa dipakai ("+(e&&e.name||"unknown")+"). Tutup aplikasi lain yang memakai mikrofon, lalu coba lagi.");
+    return;
+  }
+  const EL = window.ElevenLabsClient || (sdkPromise && await sdkPromise) || await loadSDK().catch(()=>null);
+  if(!EL){setLive("idle");caption("sys","Gagal memuat sistem suara. Periksa internet lalu muat ulang halaman.");return}
+  let lastErr=null;
+  for(const connectionType of ["websocket","webrtc"]){
+   try{
     session=await EL.Conversation.startSession({
-      agentId:AGENT_ID, connectionType:"websocket", dynamicVariables:vars(),
+      agentId:AGENT_ID, connectionType, dynamicVariables:vars(),
       overrides:{tts:{speed:LEVELS.find(l=>l.id===profile.level).speed, voiceId:TUTORS[profile.tutor||"maya"].voice}},
       onConnect(){setLive("live");startClock();$("#captions").innerHTML=""},
       onDisconnect(){if(session){session=null;setLive("idle");clearInterval(tick);showWrap(false)}},
@@ -774,10 +790,12 @@ async function startVoiceCall(){
       onModeChange({mode}){$("#tutorState").textContent=mode==="speaking"?"berbicara":"mendengarkan";if(mode!=="speaking")face.level(0)}
     });
     meter();
-  }catch(e){
-    setLive("idle");
-    caption("sys", e&&e.name==="NotAllowedError" ? "Akses mikrofon ditolak. Izinkan mikrofon di browser lalu coba lagi." : "Tidak bisa terhubung. Periksa internet dan izin mikrofon, lalu coba lagi.");
+    return;
+   }catch(e){ lastErr=e; session=null; }
   }
+  setLive("idle");
+  const detail=lastErr&&(lastErr.message||lastErr.name||String(lastErr))||"unknown";
+  caption("sys","Tidak bisa terhubung ke tutor. Periksa internet lalu coba lagi. (Info teknis: "+detail.slice(0,140)+")");
 }
 function meter(){if(!session)return;try{const v=session.getInputVolume?session.getInputVolume():0;const o=session.getOutputVolume?session.getOutputVolume():0;$("#selfInitial").style.boxShadow=`0 0 0 ${Math.round(v*18)}px rgba(61,188,159,.35)`;face.level(o*2.4);face.listen(o>0.02?0:v)}catch(e){}requestAnimationFrame(meter)}
 
