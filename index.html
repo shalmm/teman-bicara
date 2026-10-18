@@ -1,0 +1,855 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>*{}:root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Teman Bicara</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: app shell. Home = profile strip + step-by-step path. Call = dark "video call" stage beside a guide panel; stacks on phones. */
+:root{
+  --bg:#EEF2EF; --surface:#FFFFFF; --sunk:#E3E9E5; --ink:#13241F; --muted:#56675F; --line:#D3DCD7;
+  --accent:#0B7A66; --accent-soft:#D6ECE6; --accent-ink:#FFFFFF; --warm:#C9741F; --warm-soft:#F7E6D3;
+  --danger:#B8433A; --stage:#0F1916; --stage-2:#18261F; --stage-ink:#E9F1ED; --stage-muted:#9DB0A8;
+  --display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body:"Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C1412; --surface:#141F1C; --sunk:#1B2824; --ink:#E4EDE9; --muted:#93A69E; --line:#26342F;
+  --accent:#3DBC9F; --accent-soft:#173A32; --accent-ink:#04201A; --warm:#EE9F4C; --warm-soft:#3A2814;
+  --danger:#E3786E; --stage:#070D0B; --stage-2:#111C18; --stage-ink:#E9F1ED; --stage-muted:#8EA39A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C1412; --surface:#141F1C; --sunk:#1B2824; --ink:#E4EDE9; --muted:#93A69E; --line:#26342F;
+  --accent:#3DBC9F; --accent-soft:#173A32; --accent-ink:#04201A; --warm:#EE9F4C; --warm-soft:#3A2814;
+  --danger:#E3786E; --stage:#070D0B; --stage-2:#111C18; --stage-ink:#E9F1ED; --stage-muted:#8EA39A; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);margin:0}
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:0;line-height:1.15}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:999px;padding:11px 20px;font-weight:600;background:var(--accent);color:var(--accent-ink);text-decoration:none;transition:transform .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.small{padding:7px 14px;font-size:13px}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none}
+
+/* top bar */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:20px}
+.brand .mark{width:30px;height:30px;border-radius:9px;background:var(--accent);display:grid;place-items:center}
+.brand .mark svg{width:18px;height:18px}
+.brand small{font-family:var(--body);font-weight:500;font-size:13px;color:var(--muted)}
+
+/* home */
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:28px;align-items:center;padding-block:32px 8px}
+.hero h1{font-size:clamp(30px,4.6vw,46px)}
+.hero p{color:var(--muted);max-width:52ch;margin:12px 0 18px}
+.hero .actions{display:flex;flex-wrap:wrap;gap:10px}
+.example-flag{display:inline-flex;align-items:center;gap:8px;background:var(--warm-soft);color:var(--warm);font-weight:600;font-size:13px;padding:6px 12px;border-radius:999px;margin-bottom:14px}
+.mini-call{background:var(--stage);border-radius:22px;padding:0;color:var(--stage-ink);aspect-ratio:4/3;max-width:100%;position:relative;overflow:hidden}
+.mini-call canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.mini-call .cap{position:absolute;left:14px;right:14px;bottom:14px;background:rgba(0,0,0,.45);border-radius:12px;padding:10px 12px;font-size:14px}
+.mini-call .cap b{color:var(--warm)}
+.mini-call .tag{position:absolute;top:14px;left:14px;font-size:12px;color:#fff;background:rgba(0,0,0,.45);padding:4px 10px;border-radius:999px}
+
+.profile{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:16px 18px;margin-top:22px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.profile .who{font-weight:700;font-size:17px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--sunk);border-radius:999px;padding:4px 11px;font-size:13px;color:var(--ink)}
+.profile .spacer{flex:1}
+.progressbar{height:8px;background:var(--sunk);border-radius:99px;overflow:hidden;width:160px;max-width:100%}
+.progressbar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .4s}
+
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:34px 0 14px}
+.section-head h2{font-size:24px}
+.section-head p{margin:4px 0 0;color:var(--muted)}
+.path{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:step}
+.module-label{margin:18px 0 2px;font-weight:700;color:var(--muted);font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.lesson{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.lesson .num{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--sunk);font-variant-numeric:tabular-nums}
+.lesson.done .num{background:var(--accent);color:var(--accent-ink)}
+.lesson.next{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.lesson.next .num{background:var(--accent-soft);color:var(--accent)}
+.lesson.locked{opacity:.62}
+.lesson h3{font-family:var(--body);font-size:16px;font-weight:700}
+.lesson .meta{color:var(--muted);font-size:13.5px;margin-top:2px}
+.lesson .en{font-style:italic}
+.lesson .side{display:flex;align-items:center;gap:8px}
+.badge{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--sunk);color:var(--muted)}
+.badge.ok{background:var(--accent-soft);color:var(--accent)}
+.badge.opt{background:var(--warm-soft);color:var(--warm)}
+.lesson>div{min-width:0}
+
+.custom{margin:26px 0 8px;background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:18px}
+.custom h3{font-size:18px}
+.custom p{margin:4px 0 12px;color:var(--muted)}
+.custom form{display:flex;gap:10px;flex-wrap:wrap}
+.custom input{flex:1 1 260px;min-width:0;border:1.5px solid var(--line);background:var(--bg);border-radius:12px;padding:11px 14px}
+.custom .status{font-size:13px;color:var(--muted);margin-top:8px;min-height:1.2em}
+
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:30px 0 44px}
+.how div{padding:16px;border-top:3px solid var(--accent)}
+.how b{display:block;font-family:var(--display);font-size:17px;margin-bottom:4px}
+.how span{color:var(--muted);font-size:14px}
+footer{color:var(--muted);font-size:13px;padding-block:20px 40px;border-top:1px solid var(--line)}
+
+/* onboarding sheet */
+.sheet-back{position:fixed;inset:0;background:rgba(5,12,10,.55);z-index:20;display:grid;place-items:center;padding:16px}
+.sheet{background:var(--surface);border-radius:20px;width:min(620px,100%);max-height:calc(100% - 20px);overflow:auto;padding:24px}
+.sheet .steps{display:flex;gap:6px;margin-bottom:18px}
+.sheet .steps i{height:5px;flex:1;border-radius:9px;background:var(--sunk)}
+.sheet .steps i.on{background:var(--accent)}
+.sheet h2{font-size:24px}
+.sheet .hint{color:var(--muted);margin:6px 0 16px}
+.opts{display:grid;gap:9px}
+.opts.two{grid-template-columns:1fr 1fr}
+.opt{text-align:left;border:1.5px solid var(--line);background:var(--bg);border-radius:14px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+.opt b{display:block}
+.opt small{color:var(--muted);font-size:13px}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.opt .tick{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);flex:none;margin-top:2px;display:grid;place-items:center}
+.opt[aria-pressed="true"] .tick{background:var(--accent);border-color:var(--accent)}
+.opt[aria-pressed="true"] .tick::after{content:"";width:9px;height:5px;border:2px solid var(--accent-ink);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.sheet label.field{display:block;font-weight:600;margin-bottom:6px}
+.sheet input[type=text]{width:100%;border:1.5px solid var(--line);background:var(--bg);border-radius:12px;padding:12px 14px}
+.sheet .nav{display:flex;justify-content:space-between;gap:10px;margin-top:20px}
+
+/* call view */
+.call{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;padding-block:18px 30px}
+.stage{background:var(--stage);border-radius:22px;color:var(--stage-ink);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.stage .bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font-size:13px;color:var(--stage-muted)}
+.stage .live{display:inline-flex;align-items:center;gap:7px;font-weight:600}
+.stage .live i{width:8px;height:8px;border-radius:50%;background:var(--stage-muted)}
+.stage .live.on i{background:#E5484D;box-shadow:0 0 0 4px rgba(229,72,77,.25)}
+.stage .timer{font-variant-numeric:tabular-nums}
+.tutor{position:relative;margin:0 12px;border-radius:16px;overflow:hidden;aspect-ratio:4/3;max-width:100%;background:#000}
+canvas.face{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.tutor.live-ring{box-shadow:0 0 0 3px var(--warm)}
+.self video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:14px;transform:scaleX(-1)}
+.pick{display:flex;gap:6px}
+.pick button{border:0;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:600;background:rgba(255,255,255,.08);color:var(--stage-muted)}
+.pick button[aria-pressed="true"]{background:var(--stage-ink);color:var(--stage)}
+.pick button[disabled]{opacity:.5;cursor:not-allowed}
+.tutor .name{position:absolute;left:12px;top:12px;font-size:13px;color:#fff;background:rgba(0,0,0,.45);padding:4px 10px;border-radius:999px}
+.self{position:absolute;right:12px;bottom:12px;width:132px;overflow:hidden;aspect-ratio:4/3;border-radius:14px;background:var(--stage-2);border:1px solid rgba(255,255,255,.08);display:grid;place-items:center}
+.self .initial{width:46px;height:46px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:18px;transition:box-shadow .1s}
+.self span{position:absolute;left:8px;bottom:6px;font-size:11px;color:var(--stage-muted)}
+.captions{margin:12px 16px 0;min-height:76px;max-height:150px;overflow:auto;background:rgba(255,255,255,.05);border-radius:14px;padding:10px 14px;font-size:15px}
+.captions p{margin:4px 0}
+.captions .ai b{color:var(--warm)}
+.captions .me{color:var(--stage-muted)}
+.captions .me b{color:var(--stage-ink)}
+.captions .sys{color:var(--stage-muted);font-size:13px}
+.controls{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;padding:14px 16px 18px}
+.cbtn{border:0;border-radius:999px;padding:11px 18px;font-weight:600;background:rgba(255,255,255,.1);color:var(--stage-ink);display:inline-flex;align-items:center;gap:8px}
+.cbtn.go{background:var(--accent);color:var(--accent-ink)}
+.cbtn.end{background:#D9433A;color:#fff}
+.cbtn[disabled]{opacity:.45;cursor:not-allowed}
+.typebox{display:flex;gap:8px;padding:0 16px 16px}
+.typebox input{flex:1;min-width:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--stage-ink);border-radius:999px;padding:11px 16px}
+.typebox input::placeholder{color:var(--stage-muted)}
+.mode-note{margin:0 16px 12px;font-size:12.5px;color:var(--stage-muted)}
+.mode-note a{color:var(--stage-ink)}
+
+.guide{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.guide h2{font-size:22px}
+.guide .sub{color:var(--muted);font-size:14px;margin-top:4px}
+.flow{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.flow li{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;font-size:14px}
+.flow li i{width:10px;height:10px;border-radius:50%;background:var(--line);justify-self:center}
+.flow li.now{background:var(--accent-soft)}
+.flow li.now i{background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.flow li.past i{background:var(--accent)}
+.flow li small{color:var(--muted);font-variant-numeric:tabular-nums}
+.phrases{display:grid;gap:8px}
+.phrase{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:11px 12px;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
+.phrase .en{font-weight:700;font-size:15.5px}
+.phrase .id{color:var(--muted);font-size:13.5px}
+.phrase .tools{grid-row:1/3;grid-column:2;display:flex;gap:6px}
+.icon-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);display:grid;place-items:center;padding:0}
+.icon-btn svg{width:16px;height:16px}
+.icon-btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tipbox{background:var(--warm-soft);border-radius:12px;padding:12px 14px;font-size:14px}
+.tipbox b{color:var(--warm)}
+.helpers{display:flex;flex-wrap:wrap;gap:8px}
+.wrapup{border:2px solid var(--accent);border-radius:16px;padding:16px;background:var(--accent-soft)}
+.wrapup h3{font-size:19px;margin-bottom:6px}
+.back{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:var(--muted);font-weight:600;padding:0}
+
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr}
+  .call{grid-template-columns:1fr}
+  .how{grid-template-columns:1fr}
+}
+@media (max-width:480px){
+  .brand small{display:none}
+  .opts.two{grid-template-columns:1fr}
+  .lesson{grid-template-columns:36px 1fr;}
+  .lesson .num{width:34px;height:34px}
+  .lesson .side{grid-column:2}
+  .self{width:96px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="color:var(--accent-ink)"><path d="M4 12a8 8 0 0 1 13.7-5.6"/><path d="M20 12a8 8 0 0 1-13.7 5.6"/><path d="M9 10v4M12 8.5v7M15 10v4"/></svg></span>Teman Bicara <small>English tutor pribadimu</small></div>
+    <button class="btn ghost small" id="editProfile" type="button">Ubah profil</button>
+  </div>
+</header>
+
+<main id="home">
+  <section class="wrap">
+    <div class="hero">
+      <div>
+        <div class="example-flag" id="exampleFlag">Contoh profil · buat milikmu sendiri</div>
+        <h1>Latihan ngomong bahasa Inggris, berdua saja dengan tutormu.</h1>
+        <p>Ceritakan kebutuhanmu, lalu dapatkan jalur belajar langkah demi langkah. Setiap pelajaran adalah video call singkat dengan tutor AI yang sabar. Tidak ada yang menilai, dan kamu boleh pakai Bahasa Indonesia kalau bingung.</p>
+        <div class="actions">
+          <button class="btn" id="startNext" type="button">Mulai pelajaran berikutnya</button>
+          <button class="btn ghost" id="openOnboard" type="button">Buat profilku</button>
+        </div>
+      </div>
+      <div class="mini-call" aria-hidden="true">
+        <canvas id="heroFace" width="640" height="480"></canvas>
+        <span class="tag">● Video call · Ms. Maya, tutor AI</span>
+        <div class="cap"><b>Tutor:</b> Try saying: "That price is a bit high for us. Can you do better?"</div>
+      </div>
+    </div>
+
+    <div class="profile" id="profileStrip"></div>
+
+    <div class="section-head">
+      <div><h2>Jalur belajarmu</h2><p id="pathSub">Disusun dari tujuan, level, dan situasi yang kamu pilih.</p></div>
+    </div>
+    <div id="path"></div>
+
+    <div class="custom" id="customBox">
+      <h3>Butuh situasi yang lebih spesifik?</h3>
+      <p>Tulis situasi nyata yang akan kamu hadapi. AI akan membuat pelajaran khusus untukmu.</p>
+      <form id="customForm">
+        <input id="customInput" type="text" placeholder="Contoh: telepon buyer dari Jepang soal pengiriman kopi yang terlambat" aria-label="Situasi yang ingin dilatih">
+        <button class="btn" type="submit" id="customBtn">Buat pelajaran</button>
+      </form>
+      <div class="status" id="customStatus" role="status"></div>
+    </div>
+
+    <div class="how">
+      <div><b>1. Ceritakan kebutuhanmu</b><span>Tujuan, level, situasi, dan seberapa banyak bantuan Bahasa yang kamu mau.</span></div>
+      <div><b>2. Ikuti jalur langkah demi langkah</b><span>Mulai dari dasar kalau perlu, lalu langsung ke situasi yang kamu hadapi sehari-hari.</span></div>
+      <div><b>3. Video call 10 menit</b><span>Pemanasan, belajar frasa, role-play, lalu pujian dan satu frasa untuk diingat.</span></div>
+    </div>
+  </section>
+  <footer class="wrap">Teman Bicara · prototipe. Percakapan suara diproses oleh ElevenLabs. Nama, perusahaan, dan angka dalam role-play hanya contoh.</footer>
+</main>
+
+<main id="callView" hidden>
+  <div class="wrap">
+    <div style="padding-top:16px"><button class="back" id="backHome" type="button">← Kembali ke jalur belajar</button></div>
+    <div class="call">
+      <section class="stage" aria-label="Video call dengan tutor">
+        <div class="bar"><span class="live" id="liveDot"><i></i><span id="liveText">Belum terhubung</span></span><span class="pick" role="group" aria-label="Pilih tutor"><button type="button" data-tutor="maya" aria-pressed="true">Ms. Maya</button><button type="button" data-tutor="eric" aria-pressed="false">Mr. Eric</button></span><span class="timer" id="timer">00:00</span></div>
+        <div class="tutor">
+          <canvas class="face" id="callFace" width="640" height="480" aria-label="Wajah tutor"></canvas>
+          <span class="name"><span id="tutorName">Ms. Maya</span> · <span id="tutorState">siap</span></span>
+          <div class="self"><video id="selfVideo" muted playsinline hidden></video><div class="initial" id="selfInitial">B</div><span>Kamu</span></div>
+        </div>
+        <div class="captions" id="captions" aria-live="polite"><p class="sys">Teks percakapan akan muncul di sini, seperti subtitle.</p></div>
+        <div class="controls">
+          <button class="cbtn go" id="callBtn" type="button">Mulai video call</button>
+          <button class="cbtn" id="muteBtn" type="button" disabled>Matikan mic</button>
+          <button class="cbtn" id="camBtn" type="button">Nyalakan kamera</button>
+          <button class="cbtn end" id="endBtn" type="button" disabled>Akhiri</button>
+        </div>
+        <form class="typebox" id="typeBox" hidden>
+          <input id="typeInput" type="text" placeholder="Ketik jawabanmu dalam bahasa Inggris (atau Bahasa)…" aria-label="Jawabanmu">
+          <button class="cbtn go" type="submit">Kirim</button>
+        </form>
+        <p class="mode-note" id="modeNote"></p>
+      </section>
+
+      <aside class="guide" aria-label="Panduan pelajaran">
+        <div>
+          <div class="eyebrow" id="lessonEyebrow">Langkah 1</div>
+          <h2 id="lessonTitle">Judul</h2>
+          <div class="sub" id="lessonSub"></div>
+        </div>
+        <ol class="flow" id="flow"></ol>
+        <div>
+          <div class="eyebrow" style="margin-bottom:8px">Frasa hari ini · ketuk untuk dengar</div>
+          <div class="phrases" id="phrases"></div>
+        </div>
+        <div class="tipbox" id="tipbox"></div>
+        <div>
+          <div class="eyebrow" style="margin-bottom:8px">Butuh bantuan saat call?</div>
+          <div class="helpers">
+            <button class="btn ghost small" data-help="slow" type="button">Pelan-pelan</button>
+            <button class="btn ghost small" data-help="help" type="button">Bantu saya</button>
+            <button class="btn ghost small" data-help="repeat" type="button">Ulangi</button>
+            <button class="btn ghost small" data-help="bahasa" type="button">Jelaskan pakai Bahasa</button>
+          </div>
+        </div>
+        <div class="wrapup" id="wrapup" hidden>
+          <h3>Bagus sekali!</h3>
+          <p id="wrapText" style="margin:0 0 12px">Pelajaran ini selesai dan langkah berikutnya sudah terbuka.</p>
+          <button class="btn" id="nextLesson" type="button">Lanjut ke langkah berikutnya</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<div class="sheet-back" id="sheetBack" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="steps" id="sheetSteps"></div>
+    <div id="sheetBody"></div>
+    <div class="nav">
+      <button class="btn ghost" id="sheetPrev" type="button">Kembali</button>
+      <button class="btn" id="sheetNext" type="button">Lanjut</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- config ---------- */
+const AGENT_ID = "agent_1201m55607eafs9vaysnpmn39dry";
+const TALK_LINK = "https://elevenlabs.io/app/talk-to?agent_id=" + AGENT_ID;
+const SDK_URL = "https://unpkg.com/@elevenlabs/client@1.26.0/dist/lib.iife.js";
+const IN_ARTIFACT = !!(window.claude && typeof window.claude.use === "function");
+
+/* ---------- curriculum ---------- */
+const LEVELS = [
+  {id:"beginner", t:"Hampir tidak bisa", d:"Baru mulai, kosakata masih sedikit", en:"beginner (hampir tidak bisa)", speed:0.8},
+  {id:"understand", t:"Paham, tapi susah ngomong", d:"Bisa mengikuti, tapi kaku atau diam saat harus bicara", en:"understands but can't speak", speed:0.86},
+  {id:"basic", t:"Bisa ngobrol sederhana", d:"Bisa, tapi kurang percaya diri dan sering ragu", en:"basic conversation", speed:0.94},
+  {id:"inter", t:"Cukup lancar", d:"Ingin lebih natural dan sopan", en:"intermediate", speed:1.0}
+];
+const HELP = [
+  {id:"a lot", t:"Banyak", d:"Tutor sering membantu dengan Bahasa Indonesia"},
+  {id:"some", t:"Sedikit", d:"Bahasa hanya saat saya bingung"},
+  {id:"none", t:"Tidak usah", d:"Full bahasa Inggris"}
+];
+const L = (id,title,titleEn,focus,phrases,roleplay,tip)=>({id,title,titleEn,focus,phrases,roleplay,tip});
+const FOUNDATION = [
+  L("f1","Sapaan & perkenalan","Greetings and introductions","greetings, introducing yourself and your work, asking someone back",
+    [["Hi, nice to meet you.","Hai, senang bertemu Anda."],["My name is … I'm from Indonesia.","Nama saya … Saya dari Indonesia."],["I work in …","Saya bekerja di bidang …"],["How about you?","Kalau Anda?"]],
+    "meeting a new person for the first time","Jangan takut aksen. Yang penting jelas dan pelan."),
+  L("f2","Angka, harga & tanggal","Numbers, prices and dates","saying and understanding numbers, prices, quantities and dates clearly",
+    [["Two thousand five hundred.","Dua ribu lima ratus."],["It costs twelve dollars per kilo.","Harganya dua belas dolar per kilo."],["On the fifteenth of March.","Pada tanggal lima belas Maret."],["Fifteen or fifty?","Lima belas atau lima puluh?"]],
+    "confirming a price and a date with someone on the phone","Fifteen (15) dan fifty (50) sering tertukar. Tekankan akhir kata: fif-TEEN vs FIF-ty."),
+  L("f3","Kalimat penyelamat","Survival phrases","phrases to use when you don't understand or get stuck",
+    [["Sorry, could you say that again?","Maaf, bisa diulang?"],["Could you speak a little slower, please?","Bisa bicara sedikit lebih pelan?"],["How do you say … in English?","Bagaimana bilang … dalam bahasa Inggris?"],["Let me think for a moment.","Saya pikir sebentar ya."]],
+    "a fast-talking person; the learner practices asking them to repeat and slow down","Kalimat ini membuatmu tidak pernah benar-benar 'mati gaya'. Hafalkan dulu yang ini.")
+];
+const TRACKS = {
+  business:{t:"Bisnis & dagang",d:"Supplier, buyer, ekspor-impor, klien",en:"business English for trade with suppliers and buyers",lessons:[
+    L("b1","Small talk dengan klien","Small talk with clients","small talk at the start of a meeting, call or business dinner",
+      [["How was your flight?","Bagaimana penerbangannya?"],["Is this your first time in Indonesia?","Ini pertama kali ke Indonesia?"],["How's business these days?","Bagaimana bisnis akhir-akhir ini?"],["Let's have lunch together.","Mari makan siang bersama."]],
+      "meeting a foreign buyer at a trade fair in Jakarta","Small talk cukup 2 sampai 3 menit. Tanya balik supaya obrolan mengalir."),
+    L("b2","Telepon & video call","Phone and video calls","opening a business call, confirming details, and closing politely",
+      [["Hello, this is … from …","Halo, saya … dari …"],["Is this a good time to talk?","Apakah sekarang waktu yang tepat?"],["Let me confirm: 2,000 units by the 15th?","Saya konfirmasi: 2.000 unit paling lambat tanggal 15?"],["I'll send you an email after this call.","Saya kirim email setelah telepon ini."]],
+      "a supplier calls about a new order","Selalu ulangi angka dan tanggal. Ini mencegah salah paham yang mahal."),
+    L("b3","Negosiasi harga","Negotiating prices","asking for a discount, counter-offers, MOQ, payment and shipping terms, saying no politely",
+      [["That price is a bit high for us.","Harga itu agak tinggi untuk kami."],["Can you do better on the price?","Bisa kasih harga lebih baik?"],["If we order more, can we get a discount?","Kalau pesan lebih banyak, bisa dapat diskon?"],["What's your MOQ?","Berapa minimum order-nya?"],["We can do 30% deposit, 70% before shipping.","Kami bisa DP 30%, 70% sebelum kirim."]],
+      "a supplier quotes a price and the learner negotiates; the supplier pushes back kindly","Diam sebentar setelah menyebut harga itu wajar. Jangan buru-buru menurunkan tawaranmu."),
+    L("b4","Pesanan & pengiriman","Orders and shipping","confirming orders, lead time, shipping terms like FOB and CIF, tracking",
+      [["What's the lead time?","Berapa lama waktu produksinya?"],["Is the price FOB or CIF?","Harganya FOB atau CIF?"],["When will the goods be shipped?","Kapan barang dikirim?"],["Could you send me the tracking number?","Bisa kirim nomor resinya?"]],
+      "following up with a supplier on an order's shipping date","FOB: pembeli tanggung ongkir laut. CIF: penjual tanggung sampai pelabuhan tujuan."),
+    L("b5","Menangani masalah","Handling problems","complaining politely about a late shipment or damaged goods and agreeing a solution",
+      [["Unfortunately, the shipment is late.","Sayangnya, kirimannya terlambat."],["Some of the goods arrived damaged.","Sebagian barang datang rusak."],["How can we solve this?","Bagaimana kita menyelesaikan ini?"],["Can you replace them or give a refund?","Bisa diganti atau dikembalikan uangnya?"]],
+      "calling a supplier about a damaged shipment","Tegas tapi sopan. Gunakan 'unfortunately' untuk menyampaikan kabar buruk.")
+  ]},
+  work:{t:"Kerja kantoran",d:"Rapat, rekan kerja asing, presentasi",en:"workplace English",lessons:[
+    L("w1","Perkenalan di kantor","Introducing yourself at work","introducing your role and team",[["I'm in charge of …","Saya bertanggung jawab atas …"],["I've been here for two years.","Saya sudah dua tahun di sini."],["Nice to work with you.","Senang bekerja dengan Anda."]],"meeting a new foreign colleague","Sebut peranmu dengan kata kerja: I manage, I handle, I lead."),
+    L("w2","Ikut rapat","Speaking up in meetings","giving opinions, agreeing and disagreeing politely",[["Can I add something?","Boleh saya tambahkan?"],["I see your point, but …","Saya paham maksudnya, tapi …"],["Could you clarify that?","Bisa diperjelas?"]],"a team meeting where the learner shares an idea","Satu kalimat pendek di rapat lebih baik daripada diam."),
+    L("w3","Update progres","Giving updates","reporting progress, delays and next steps",[["We're on track.","Kami sesuai jadwal."],["We're a bit behind because …","Kami agak terlambat karena …"],["The next step is …","Langkah berikutnya adalah …"]],"a manager asks for a project update","Struktur: status, masalah, langkah berikutnya."),
+    L("w4","Minta bantuan","Asking for help","asking colleagues for help and favours politely",[["Could you help me with …?","Bisa bantu saya dengan …?"],["Do you have a minute?","Ada waktu sebentar?"],["Thanks, I really appreciate it.","Terima kasih, saya sangat menghargainya."]],"asking a colleague to review a document","'Could you' terdengar lebih sopan daripada 'Can you'.")
+  ]},
+  interview:{t:"Interview kerja",d:"Melamar kerja, magang, beasiswa",en:"job and scholarship interviews",lessons:[
+    L("i1","Tell me about yourself","Tell me about yourself","a 60-second self introduction for interviews",[["I graduated from … in …","Saya lulus dari … jurusan …"],["I have experience in …","Saya punya pengalaman di …"],["I'm interested in this role because …","Saya tertarik dengan posisi ini karena …"]],"the opening question of a job interview","Urutan: sekarang, masa lalu, alasan melamar."),
+    L("i2","Kelebihan & kekurangan","Strengths and weaknesses","answering strengths and weaknesses with examples",[["One of my strengths is …","Salah satu kelebihan saya adalah …"],["For example, …","Contohnya, …"],["I'm working on improving …","Saya sedang memperbaiki …"]],"an interviewer asks about strengths and weaknesses","Selalu beri contoh nyata."),
+    L("i3","Cerita pengalaman","Talking about experience","describing a past challenge using the STAR method",[["In my last job, I …","Di pekerjaan terakhir, saya …"],["The challenge was …","Tantangannya adalah …"],["As a result, …","Hasilnya, …"]],"a behavioural interview question","Gunakan past tense: I led, I solved, I improved."),
+    L("i4","Bertanya balik","Asking questions","asking good questions at the end of an interview",[["What does a typical day look like?","Seperti apa hari kerja biasanya?"],["What are the next steps?","Apa tahap selanjutnya?"]],"the end of an interview","Selalu siapkan dua pertanyaan.")
+  ]},
+  travel:{t:"Traveling",d:"Bandara, hotel, restoran, jalan-jalan",en:"travel English",lessons:[
+    L("t1","Bandara & imigrasi","Airport and immigration","check-in and immigration questions",[["I'm here for vacation.","Saya ke sini untuk liburan."],["I'm staying for ten days.","Saya tinggal sepuluh hari."],["Where is gate twelve?","Di mana gerbang dua belas?"]],"an immigration officer asks questions","Jawab singkat dan jelas, itu yang petugas mau."),
+    L("t2","Hotel","At the hotel","checking in and asking for help",[["I have a reservation under …","Saya ada reservasi atas nama …"],["What time is breakfast?","Jam berapa sarapan?"],["The air conditioner isn't working.","AC-nya tidak berfungsi."]],"checking in at a hotel","Sebut nama dan tanggal booking di awal."),
+    L("t3","Restoran","At a restaurant","ordering food and asking about ingredients",[["Could I see the menu, please?","Boleh lihat menunya?"],["I'd like the …","Saya pesan …"],["Can I have the bill, please?","Minta bonnya."]],"ordering dinner at a restaurant","'I'd like' lebih sopan daripada 'I want'."),
+    L("t4","Tanya arah & belanja","Directions and shopping","asking for directions and prices",[["How do I get to …?","Bagaimana cara ke …?"],["How much is this?","Berapa harganya?"],["Do you have this in another size?","Ada ukuran lain?"]],"asking a local for directions, then shopping","Tunjuk peta sambil bertanya, itu sangat membantu.")
+  ]},
+  daily:{t:"Ngobrol sehari-hari",d:"Teman, keluarga, media sosial",en:"everyday conversation",lessons:[
+    L("d1","Hobi","Hobbies","talking about hobbies and free time",[["In my free time, I like …","Di waktu luang, saya suka …"],["What do you do for fun?","Kamu suka ngapain untuk senang-senang?"]],"chatting with a new friend","Tanya balik dengan 'How about you?'"),
+    L("d2","Keluarga","Family","talking about family",[["I have two children.","Saya punya dua anak."],["My son is studying in …","Anak laki-laki saya kuliah di …"]],"a friendly chat about family","Cukup cerita yang nyaman untuk dibagi."),
+    L("d3","Makanan","Food","describing Indonesian food and preferences",[["You should try rendang.","Kamu harus coba rendang."],["It's a bit spicy.","Agak pedas."]],"recommending Indonesian food to a foreign friend","Jelaskan rasa: spicy, sweet, savory, sour."),
+    L("d4","Rencana","Making plans","making and changing plans",[["Are you free this weekend?","Kamu kosong akhir pekan ini?"],["How about Saturday?","Bagaimana kalau Sabtu?"]],"planning to meet up","'How about …?' adalah cara mudah untuk mengusulkan.")
+  ]},
+  study:{t:"Kuliah & sekolah",d:"Presentasi, diskusi, dosen",en:"academic English",lessons:[
+    L("s1","Presentasi","Presenting","opening, structuring and closing a short presentation",[["Today I'm going to talk about …","Hari ini saya akan membahas …"],["Let's move on to …","Mari lanjut ke …"],["Thank you. Any questions?","Terima kasih. Ada pertanyaan?"]],"presenting a group project","Bagi menjadi tiga bagian dan sebutkan di awal."),
+    L("s2","Diskusi kelas","Class discussion","sharing opinions in class",[["In my opinion, …","Menurut saya, …"],["I agree with …","Saya setuju dengan …"]],"a seminar discussion","Boleh mulai dengan pendapat orang lain, lalu tambahkan."),
+    L("s3","Bertanya ke dosen","Talking to lecturers","asking lecturers questions politely",[["Could I ask about the assignment?","Boleh saya bertanya tentang tugas?"],["When is the deadline?","Kapan tenggatnya?"]],"office hours with a lecturer","Sapa dengan 'Excuse me, Professor …'")
+  ]}
+};
+
+/* ---------- state ---------- */
+const EXAMPLE = {name:"Pak Hendra", goal:"business", level:"understand", picks:["b1","b2","b3"], help:"some", tutor:"maya", example:true};
+function load(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+let profile = load("tb.profile", EXAMPLE);
+let done = load("tb.done", profile.example ? ["f1"] : []);
+let customLessons = load("tb.custom", []);
+let current = null;
+
+function buildPath(p){
+  const track = TRACKS[p.goal];
+  const mods = [];
+  if (p.level==="beginner"||p.level==="understand") mods.push({label:"Kenalan dengan bahasa Inggris (dasar)", lessons:FOUNDATION.map(l=>({...l,opt:false}))});
+  else if (p.level==="basic") mods.push({label:"Pemanasan", lessons:[{...FOUNDATION[2],opt:false}]});
+  const picked = track.lessons.filter(l=>p.picks.includes(l.id));
+  const rest = track.lessons.filter(l=>!p.picks.includes(l.id));
+  mods.push({label:track.t+": situasi pilihanmu", lessons:picked.map(l=>({...l,opt:false}))});
+  if (customLessons.length) mods.push({label:"Pelajaran khusus untukmu", lessons:customLessons.map(l=>({...l,opt:false}))});
+  if (rest.length) mods.push({label:"Lanjutan (opsional)", lessons:rest.map(l=>({...l,opt:true}))});
+  return mods;
+}
+function flat(){return buildPath(profile).flatMap(m=>m.lessons)}
+function nextLessonObj(){const all=flat();return all.find(l=>!done.includes(l.id)&&!l.opt)||all.find(l=>!done.includes(l.id))||all[0]}
+
+/* ---------- home render ---------- */
+const $=s=>document.querySelector(s);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function renderHome(){
+  $("#exampleFlag").hidden = !profile.example;
+  $("#openOnboard").textContent = profile.example ? "Buat profilku" : "Ubah profil";
+  const all = flat(), core = all.filter(l=>!l.opt), dn = core.filter(l=>done.includes(l.id)).length;
+  const lvl = LEVELS.find(l=>l.id===profile.level), tr = TRACKS[profile.goal], hp = HELP.find(h=>h.id===profile.help);
+  $("#profileStrip").innerHTML = `<span class="who">${esc(profile.name)}</span>
+    <span class="chip">${esc(tr.t)}</span><span class="chip">${esc(lvl.t)}</span><span class="chip">Bantuan Bahasa: ${esc(hp.t)}</span>
+    <span class="spacer"></span><span class="eyebrow" style="font-variant-numeric:tabular-nums">${dn} dari ${core.length} langkah</span>
+    <span class="progressbar" aria-hidden="true"><i style="width:${core.length?dn/core.length*100:0}%"></i></span>`;
+  const nx = nextLessonObj();
+  let n=0, html="";
+  for (const m of buildPath(profile)){
+    html += `<div class="module-label">${esc(m.label)}</div><ol class="path">`;
+    for (const l of m.lessons){
+      n++;
+      const isDone=done.includes(l.id), isNext=nx&&l.id===nx.id;
+      const cls = isDone?"done":isNext?"next":(l.opt?"":"locked");
+      html += `<li class="lesson ${cls}"><span class="num">${isDone?"✓":n}</span>
+        <div><h3>${esc(l.title)}</h3><div class="meta"><span class="en">${esc(l.titleEn)}</span> · ${l.phrases.length} frasa · ±10 menit</div></div>
+        <div class="side">${isDone?'<span class="badge ok">Selesai</span>':l.opt?'<span class="badge opt">Opsional</span>':isNext?'<span class="badge ok">Berikutnya</span>':""}
+        <button class="btn small ${isNext?"":"ghost"}" type="button" data-open="${esc(l.id)}">${isDone?"Ulangi":"Mulai"}</button></div></li>`;
+    }
+    html += "</ol>";
+  }
+  $("#path").innerHTML = html;
+  $("#startNext").textContent = nx && !done.includes(nx.id) ? "Mulai: "+nx.title : "Ulangi pelajaran";
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-open]");if(b)openLesson(b.dataset.open)});
+$("#startNext").onclick=()=>openLesson(nextLessonObj().id);
+
+/* ---------- onboarding ---------- */
+let draft=null, step=0;
+const STEPS=["name","goal","level","picks","help","tutor"];
+function openSheet(){draft={...profile,picks:[...profile.picks],example:false};if(profile.example)draft.name="";step=0;$("#sheetBack").hidden=false;renderSheet()}
+$("#openOnboard").onclick=openSheet;$("#editProfile").onclick=openSheet;
+$("#sheetBack").addEventListener("click",e=>{if(e.target.id==="sheetBack")$("#sheetBack").hidden=true});
+function optBtn(attr,val,on,t,d,multi){return `<button type="button" class="opt" data-${attr}="${esc(val)}" aria-pressed="${on}"><span class="tick" aria-hidden="true"></span><span><b>${esc(t)}</b>${d?`<small>${esc(d)}</small>`:""}</span></button>`}
+function renderSheet(){
+  $("#sheetSteps").innerHTML=STEPS.map((_,i)=>`<i class="${i<=step?"on":""}"></i>`).join("");
+  const s=STEPS[step], b=$("#sheetBody");
+  if(s==="name") b.innerHTML=`<h2 id="sheetTitle">Halo! Siapa namamu?</h2><p class="hint">Tutor akan memanggilmu dengan nama ini.</p><label class="field" for="nameIn">Nama panggilan</label><input id="nameIn" type="text" placeholder="Contoh: Pak Budi, Shihab, Bu Rina" value="${esc(draft.name)}">`;
+  if(s==="goal") b.innerHTML=`<h2 id="sheetTitle">Untuk apa kamu belajar bahasa Inggris?</h2><p class="hint">Pilih yang paling penting sekarang. Bisa diubah kapan saja.</p><div class="opts two">${Object.entries(TRACKS).map(([k,v])=>optBtn("goal",k,draft.goal===k,v.t,v.d)).join("")}</div>`;
+  if(s==="level") b.innerHTML=`<h2 id="sheetTitle">Bagaimana kemampuan bicaramu sekarang?</h2><p class="hint">Jujur saja. Tidak ada yang menilai, ini hanya untuk mengatur kecepatan tutor.</p><div class="opts">${LEVELS.map(l=>optBtn("level",l.id,draft.level===l.id,l.t,l.d)).join("")}</div>`;
+  if(s==="picks"){const tr=TRACKS[draft.goal]; if(!draft.picks.some(id=>tr.lessons.find(l=>l.id===id)))draft.picks=tr.lessons.slice(0,2).map(l=>l.id);
+    b.innerHTML=`<h2 id="sheetTitle">Situasi apa yang paling sering kamu hadapi?</h2><p class="hint">Pilih satu atau lebih. Ini jadi pelajaran utama di jalurmu.</p><div class="opts">${tr.lessons.map(l=>optBtn("pick",l.id,draft.picks.includes(l.id),l.title,l.titleEn)).join("")}</div>`;}
+  if(s==="help") b.innerHTML=`<h2 id="sheetTitle">Seberapa banyak bantuan Bahasa Indonesia?</h2><p class="hint">Kamu tetap boleh bicara Bahasa kapan saja kalau bingung.</p><div class="opts">${HELP.map(h=>optBtn("help",h.id,draft.help===h.id,h.t,h.d)).join("")}</div>`;
+  if(s==="tutor") b.innerHTML=`<h2 id="sheetTitle">Pilih tutormu</h2><p class="hint">Tutor ini yang akan muncul dan bicara denganmu di video call. Bisa diganti kapan saja.</p><div class="opts two">${Object.entries(TUTORS).map(([k,v])=>optBtn("tutor",k,(draft.tutor||"maya")===k,v.title,v.desc)).join("")}</div>`;
+  $("#sheetPrev").textContent = step===0?"Batal":"Kembali";
+  $("#sheetNext").textContent = step===STEPS.length-1?"Buat jalur belajarku":"Lanjut";
+  const ni=$("#nameIn"); if(ni){ni.focus();ni.oninput=()=>draft.name=ni.value}
+}
+$("#sheetBody").addEventListener("click",e=>{
+  const o=e.target.closest(".opt"); if(!o)return;
+  if(o.dataset.goal){draft.goal=o.dataset.goal;draft.picks=[]}
+  if(o.dataset.level)draft.level=o.dataset.level;
+  if(o.dataset.help)draft.help=o.dataset.help;
+  if(o.dataset.tutor)draft.tutor=o.dataset.tutor;
+  if(o.dataset.pick){const id=o.dataset.pick;draft.picks=draft.picks.includes(id)?draft.picks.filter(x=>x!==id):[...draft.picks,id]}
+  renderSheet();
+});
+$("#sheetPrev").onclick=()=>{if(step===0){$("#sheetBack").hidden=true;return}step--;renderSheet()};
+$("#sheetNext").onclick=()=>{
+  if(STEPS[step]==="name"&&!draft.name.trim()){$("#nameIn").focus();return}
+  if(STEPS[step]==="picks"&&!draft.picks.length)return;
+  if(step<STEPS.length-1){step++;renderSheet();return}
+  const wasExample=profile.example;
+  draft.name=draft.name.trim();profile=draft;save("tb.profile",profile);
+  if(wasExample){done=[];save("tb.done",done)}
+  $("#sheetBack").hidden=true;renderHome();window.scrollTo({top:0,behavior:"smooth"});
+};
+
+/* ---------- custom lesson via AI ---------- */
+let samplePromise = IN_ARTIFACT ? window.claude.use("sample") : Promise.resolve(null);
+$("#customForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const q=$("#customInput").value.trim(); if(!q)return;
+  const st=$("#customStatus"), btn=$("#customBtn");
+  const sample = await samplePromise;
+  if(!sample){st.textContent="Pembuat pelajaran AI belum aktif di tampilan ini. Coba buka dari Claude.";return}
+  btn.disabled=true; st.textContent="Menyusun pelajaran untukmu…";
+  const lvl=LEVELS.find(l=>l.id===profile.level);
+  try{
+    const r = await sample.json(`Create one short English speaking lesson for an Indonesian learner.
+Learner level: ${lvl.en}. Goal: ${TRACKS[profile.goal].en}.
+Situation they described (in Indonesian or English): "${q}"
+Return ONLY JSON: {"title": short Indonesian title (max 5 words), "titleEn": short English title, "focus": one English line describing what to practice, "phrases": [[English phrase, Indonesian translation], ... 4 or 5 items, natural and simple for the level], "roleplay": one English line describing the role-play scenario where the tutor plays the other person, "tip": one short practical tip in casual Indonesian}`, {modelTier:"default"});
+    if(!r||!r.title||!Array.isArray(r.phrases))throw new Error("bad");
+    const lesson=L("c"+Date.now(),String(r.title),String(r.titleEn||r.title),String(r.focus||q),r.phrases.slice(0,6).map(p=>[String(p[0]),String(p[1]||"")]),String(r.roleplay||q),String(r.tip||""));
+    customLessons=[...customLessons,lesson];save("tb.custom",customLessons);
+    st.textContent=`Siap! "${lesson.title}" sudah ditambahkan ke jalurmu.`;$("#customInput").value="";renderHome();
+  }catch(err){
+    st.textContent = err&&err.code==="rate_limited" ? "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi." : err&&err.code==="not_granted" ? "Izin untuk AI ditolak, jadi pelajaran khusus tidak bisa dibuat di sini." : "Gagal membuat pelajaran. Coba tulis situasinya dengan lebih jelas.";
+  }finally{btn.disabled=false}
+});
+samplePromise.then(s=>{ if(!s && IN_ARTIFACT) $("#customStatus").textContent="Pembuat pelajaran AI tidak tersedia di tampilan ini."; });
+
+/* ---------- tutor characters (video-call faces) ---------- */
+const TUTORS = {
+  maya:{name:"Maya", title:"Ms. Maya", desc:"Suara perempuan, hangat dan lembut", voice:"DODLEQrClDo8wCz460ld", female:true,
+    skin:"#C68E68", shade:"#AE7653", hair:"#24160F", shirt:"#0E6B59", shirt2:"#0A5547", top:"#F2E8DC", lip:"#A65259", iris:"#3A2416",
+    wall:["#E4ECE6","#CBD8D0"], glasses:false},
+  eric:{name:"Eric", title:"Mr. Eric", desc:"Suara laki-laki, tenang dan jelas", voice:"cjVigY5qzO86Huf0OWal", female:false,
+    skin:"#E0AE8B", shade:"#C6916C", hair:"#43301F", shirt:"#2B3D58", shirt2:"#223149", top:"#F4F4F1", lip:"#B26A62", iris:"#3D5A73",
+    wall:["#E9E4DC","#D3CBBE"], glasses:true}
+};
+function makeTutor(canvas){
+  const ctx = canvas.getContext("2d");
+  const W = 640, H = 480;
+  canvas.width = W; canvas.height = H;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let char = TUTORS.maya, bg = null;
+  const s = {t:0, mouth:0, target:0, talking:false, sim:false, listen:0, blink:0, nextBlink:2, gaze:0, gazeT:0, nextGaze:3, brow:0, nod:0};
+
+  function buildBG(){
+    const o = document.createElement("canvas"); o.width = W; o.height = H;
+    const g = o.getContext("2d");
+    const wg = g.createLinearGradient(0,0,0,H); wg.addColorStop(0,char.wall[0]); wg.addColorStop(1,char.wall[1]);
+    g.fillStyle = wg; g.fillRect(0,0,W,H);
+    // window with daylight
+    g.fillStyle = "#F7FAF6"; g.fillRect(48,58,170,220);
+    const lg = g.createLinearGradient(48,58,218,278); lg.addColorStop(0,"rgba(255,244,214,.9)"); lg.addColorStop(1,"rgba(190,220,230,.6)");
+    g.fillStyle = lg; g.fillRect(56,66,154,204);
+    g.fillStyle = "rgba(90,80,70,.35)"; g.fillRect(130,66,6,204); g.fillRect(56,164,154,6);
+    // shelf with books
+    g.fillStyle = "#8A6A4C"; g.fillRect(440,150,170,10); g.fillRect(440,250,170,10);
+    const books = ["#2F6F62","#C9741F","#5B6C8F","#B5503F","#D8B45A","#3E4A3F","#7E5A8C"];
+    let x = 450; for (let i=0;i<7;i++){ const w = 14+((i*7)%9), h = 60+((i*13)%28); g.fillStyle = books[i]; g.fillRect(x,150-h,w,h); x += w+3; }
+    x = 452; for (let i=0;i<5;i++){ const w = 16+((i*5)%8), h = 56+((i*11)%30); g.fillStyle = books[(i+3)%7]; g.fillRect(x,250-h,w,h); x += w+4; }
+    // plant
+    g.fillStyle = "#B9653E"; g.beginPath(); g.moveTo(540,420); g.lineTo(600,420); g.lineTo(592,480); g.lineTo(548,480); g.fill();
+    g.fillStyle = "#3F7A4E";
+    for (let i=0;i<9;i++){ const a = -Math.PI/2 + (i-4)*0.32; g.beginPath(); g.ellipse(570+Math.cos(a)*38, 400+Math.sin(a)*46, 11, 30, a+Math.PI/2, 0, Math.PI*2); g.fill(); }
+    // soft focus
+    const out = document.createElement("canvas"); out.width = W; out.height = H;
+    const og = out.getContext("2d"); try{ og.filter = "blur(3px)"; }catch(e){}
+    og.drawImage(o,0,0); bg = out;
+  }
+
+  function ell(x,y,rx,ry,c){ ctx.beginPath(); ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2); ctx.fillStyle = c; ctx.fill(); }
+
+  function drawBody(breath){
+    const c = char;
+    ctx.save(); ctx.translate(0, breath);
+    // neck
+    ctx.fillStyle = c.shade; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(284,280,72,90,18) : ctx.rect(284,280,72,90); ctx.fill();
+    // shoulders
+    ctx.fillStyle = c.shirt;
+    ctx.beginPath(); ctx.moveTo(96,H); ctx.bezierCurveTo(104,382,180,350,250,342); ctx.lineTo(390,342); ctx.bezierCurveTo(460,350,536,382,544,H); ctx.closePath(); ctx.fill();
+    if (c.female){
+      ctx.fillStyle = c.top; ctx.beginPath(); ctx.moveTo(272,342); ctx.lineTo(368,342); ctx.lineTo(320,432); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = c.shirt2; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(262,344); ctx.lineTo(318,452); ctx.moveTo(378,344); ctx.lineTo(322,452); ctx.stroke();
+    } else {
+      ctx.fillStyle = c.top;
+      ctx.beginPath(); ctx.moveTo(276,338); ctx.lineTo(320,372); ctx.lineTo(296,396); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(364,338); ctx.lineTo(320,372); ctx.lineTo(344,396); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = c.shirt2; for (let i=0;i<3;i++) ell(320,400+i*28,3.5,3.5,c.shirt2);
+    }
+    ctx.restore();
+  }
+
+  function drawHead(){
+    const c = char;
+    // hair behind (long)
+    if (c.female){
+      ctx.fillStyle = c.hair; ctx.beginPath();
+      ctx.moveTo(-104,-30); ctx.bezierCurveTo(-118,40,-128,120,-112,160); ctx.quadraticCurveTo(0,182,112,160); ctx.bezierCurveTo(128,120,118,40,104,-30);
+      ctx.bezierCurveTo(96,-140,-96,-140,-104,-30); ctx.fill();
+    }
+    ell(-89,8,14,22,c.shade); ell(89,8,14,22,c.shade);
+    // face
+    const fg = ctx.createRadialGradient(-20,-30,20,0,10,130); fg.addColorStop(0,c.skin); fg.addColorStop(1,c.shade);
+    ctx.beginPath(); ctx.ellipse(0,0,88,110,0,0,Math.PI*2); ctx.fillStyle = fg; ctx.fill();
+    // hair front: cap over the crown, then the fringe
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.ellipse(0,-50,93,66,0,Math.PI*1.02,Math.PI*1.98); ctx.fill();
+    ctx.beginPath();
+    if (c.female){
+      ctx.moveTo(-92,-6); ctx.bezierCurveTo(-96,-110,70,-140,96,-40); ctx.bezierCurveTo(98,-20,96,0,92,8);
+      ctx.bezierCurveTo(70,-60,20,-70,-30,-72); ctx.bezierCurveTo(-60,-60,-80,-34,-92,-6); ctx.fill();
+    } else {
+      ctx.moveTo(-90,-20); ctx.bezierCurveTo(-96,-112,90,-126,92,-24); ctx.bezierCurveTo(80,-58,40,-70,0,-74);
+      ctx.bezierCurveTo(-40,-72,-74,-60,-90,-20); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(-18,-88,44,20,-0.25,0,Math.PI*2); ctx.fill();
+    }
+    // cheeks
+    for (const sx of [-1,1]){ const cg = ctx.createRadialGradient(sx*50,32,2,sx*50,32,24); cg.addColorStop(0,"rgba(214,110,100,.28)"); cg.addColorStop(1,"rgba(214,110,100,0)"); ctx.fillStyle = cg; ctx.fillRect(sx*50-26,6,52,52); }
+    // brows
+    const by = -40 - s.brow*7;
+    ctx.strokeStyle = c.hair; ctx.lineWidth = c.female?5:7; ctx.lineCap = "round";
+    for (const sx of [-1,1]){ ctx.beginPath(); ctx.moveTo(sx*18,by+2); ctx.quadraticCurveTo(sx*36,by-6,sx*54,by+1); ctx.stroke(); }
+    // eyes
+    const open = Math.max(0.08, 1 - s.blink);
+    for (const sx of [-1,1]){
+      const ex = sx*35, ey = -12;
+      ctx.save(); ctx.beginPath(); ctx.ellipse(ex,ey,16,11*open,0,0,Math.PI*2); ctx.fillStyle = "#FBF8F4"; ctx.fill(); ctx.clip();
+      ell(ex+s.gaze*5,ey+1,8.5,8.5,c.iris); ell(ex+s.gaze*5,ey+1,4.2,4.2,"#120C08"); ell(ex+s.gaze*5+2.5,ey-2.5,2,2,"rgba(255,255,255,.9)");
+      ctx.restore();
+      ctx.strokeStyle = "rgba(30,18,12,.75)"; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.ellipse(ex,ey,16,11*open,0,Math.PI*1.05,Math.PI*1.95); ctx.stroke();
+      if (c.female && open>0.5){ ctx.beginPath(); ctx.moveTo(ex+sx*15,ey-5); ctx.lineTo(ex+sx*20,ey-9); ctx.stroke(); }
+    }
+    if (c.glasses){
+      ctx.strokeStyle = "#1E2226"; ctx.lineWidth = 3.5;
+      for (const sx of [-1,1]){ ctx.beginPath(); ctx.roundRect ? ctx.roundRect(sx*35-24,-30,48,34,10) : ctx.rect(sx*35-24,-30,48,34); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(-11,-16); ctx.quadraticCurveTo(0,-21,11,-16); ctx.stroke();
+    }
+    // nose
+    ctx.strokeStyle = c.shade; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(2,-2); ctx.quadraticCurveTo(-8,22,-2,26); ctx.quadraticCurveTo(4,28,9,24); ctx.stroke();
+    // mouth
+    const o = s.mouth, w = 36 + o*4, my = 56;
+    if (o < 0.06){
+      ctx.strokeStyle = c.lip; ctx.lineWidth = 4.5; ctx.beginPath(); ctx.moveTo(-w/2,my); ctx.quadraticCurveTo(0,my+11,w/2,my); ctx.stroke();
+    } else {
+      const h = 6 + o*24;
+      ctx.beginPath(); ctx.moveTo(-w/2,my); ctx.quadraticCurveTo(0,my-5,w/2,my); ctx.quadraticCurveTo(0,my+h*1.5,-w/2,my); ctx.closePath();
+      ctx.fillStyle = "#4E1E23"; ctx.fill();
+      ctx.save(); ctx.clip();
+      ctx.fillStyle = "#FBF6F0"; ctx.fillRect(-w/2,my-6,w,Math.min(8,3+o*8));
+      ell(0,my+h*1.25,w*0.32,h*0.45,"#C2605F");
+      ctx.restore();
+      ctx.strokeStyle = c.lip; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(-w/2,my); ctx.quadraticCurveTo(0,my-5,w/2,my); ctx.quadraticCurveTo(0,my+h*1.5,-w/2,my); ctx.stroke();
+    }
+  }
+
+  function frame(){
+    const dt = 1/60; s.t += dt;
+    // mouth: real audio level, or a simulated talk pattern for the browser voice
+    let tgt = s.target;
+    if (s.sim) tgt = 0.25 + 0.5*Math.abs(Math.sin(s.t*9.3)*Math.sin(s.t*3.7+1));
+    if (!s.talking && !s.sim) tgt = 0;
+    const syll = 0.55 + 0.45*Math.abs(Math.sin(s.t*16));
+    const want = Math.min(1, tgt*syll);
+    s.mouth += (want - s.mouth) * (want > s.mouth ? 0.55 : 0.28);
+    // blinking
+    s.nextBlink -= dt;
+    if (s.nextBlink <= 0){ s.blink = 1; s.nextBlink = 2 + Math.random()*3.5; }
+    s.blink = Math.max(0, s.blink - dt*7);
+    // gaze drift
+    s.nextGaze -= dt; if (s.nextGaze <= 0){ s.gazeT = (Math.random()-0.5)*0.9; s.nextGaze = 2 + Math.random()*3; }
+    s.gaze += (s.gazeT - s.gaze)*0.06;
+    // listening: nod and raise brows a little when the learner talks
+    s.brow += ((s.listen>0.15?0.6:0) + (s.mouth>0.5?0.3:0) - s.brow)*0.08;
+    s.nod += ((s.listen>0.15? Math.sin(s.t*5)*4 : 0) - s.nod)*0.1;
+    const sway = reduce?0:Math.sin(s.t*0.7)*0.035 + (s.mouth*Math.sin(s.t*4))*0.02;
+    const bob = reduce?0:Math.sin(s.t*1.3)*2 + s.nod;
+    const breath = reduce?0:Math.sin(s.t*1.6)*2.2;
+
+    if (!bg) buildBG();
+    ctx.drawImage(bg,0,0);
+    drawBody(breath);
+    ctx.save(); ctx.translate(320, 210 + bob + breath*0.5); ctx.rotate(sway); drawHead(); ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  return {
+    setChar(id){ char = TUTORS[id] || TUTORS.maya; bg = null; },
+    level(v){ s.target = Math.max(0, Math.min(1, v)); s.talking = v > 0.02; },
+    simTalk(on){ s.sim = !!on; },
+    listen(v){ s.listen = v; }
+  };
+}
+
+const heroFace=makeTutor(document.getElementById("heroFace"));
+(function demo(){let on=true;heroFace.simTalk(true);setInterval(()=>{on=!on;heroFace.simTalk(on)},on?2600:1600)})();
+const face=makeTutor(document.getElementById("callFace"));
+function applyTutor(){const id=profile.tutor||"maya";face.setChar(id);$("#tutorName").textContent=TUTORS[id].title;document.querySelectorAll("[data-tutor]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.tutor===id)))}
+document.querySelectorAll("[data-tutor]").forEach(b=>b.onclick=()=>{profile.tutor=b.dataset.tutor;save("tb.profile",profile);applyTutor()});
+
+/* ---------- lesson / call view ---------- */
+const FLOW=[["Pemanasan","1 mnt",60],["Belajar frasa","3 mnt",240],["Role-play","5 mnt",540],["Penutup","1 mnt",600]];
+let session=null, textHistory=[], startTime=0, tick=null, muted=false;
+function openLesson(id){
+  current=flat().find(l=>l.id===id); if(!current)return;
+  const all=flat(); const idx=all.findIndex(l=>l.id===id)+1;
+  $("#home").hidden=true;$("#callView").hidden=false;window.scrollTo(0,0);
+  $("#lessonEyebrow").textContent=`Langkah ${idx} · ${current.titleEn}`;
+  $("#lessonTitle").textContent=current.title;
+  $("#lessonSub").textContent="Role-play: "+current.roleplay;
+  $("#phrases").innerHTML=current.phrases.map((p,i)=>`<div class="phrase"><span class="en">${esc(p[0])}</span><span class="id">${esc(p[1])}</span><span class="tools"><button class="icon-btn" type="button" data-say="${i}" aria-label="Dengar frasa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></button><button class="icon-btn" type="button" data-said="${i}" aria-pressed="false" aria-label="Tandai sudah diucapkan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12l4 4 10-10"/></svg></button></span></div>`).join("");
+  $("#tipbox").innerHTML=`<b>Tips:</b> ${esc(current.tip)}`;
+  $("#selfInitial").textContent=(profile.name.replace(/^(Pak|Bu|Kak|Mas|Mbak)\s+/i,"")[0]||"K").toUpperCase();
+  $("#wrapup").hidden=true;
+  $("#captions").innerHTML='<p class="sys">Teks percakapan akan muncul di sini, seperti subtitle.</p>';
+  renderFlow(0); setLive("idle"); $("#timer").textContent="00:00"; applyTutor();
+  $("#modeNote").innerHTML = IN_ARTIFACT
+    ? `Di pratinjau ini mikrofon tidak bisa dipakai, jadi latihan memakai mode ketik dan tutor membalas dengan suara. Untuk video call suara penuh, buka file aplikasi Teman Bicara di Chrome, atau <a href="${TALK_LINK}" target="_blank" rel="noopener">coba tutor suara di ElevenLabs</a>.`
+    : "Izinkan akses mikrofon saat diminta. Pakai earphone supaya suara lebih jelas.";
+  $("#callBtn").textContent = IN_ARTIFACT ? "Mulai latihan" : "Mulai video call";
+}
+$("#backHome").onclick=()=>{endCall();$("#callView").hidden=true;$("#home").hidden=false;renderHome()};
+function renderFlow(sec){
+  let now=FLOW.findIndex(f=>sec<f[2]); if(now<0)now=FLOW.length-1;
+  $("#flow").innerHTML=FLOW.map((f,i)=>`<li class="${i<now?"past":i===now?"now":""}"><i></i><span>${f[0]}</span><small>${f[1]}</small></li>`).join("");
+}
+document.addEventListener("click",e=>{
+  const s=e.target.closest("[data-say]"); if(s){speak(current.phrases[+s.dataset.say][0]);return}
+  const d=e.target.closest("[data-said]"); if(d){d.setAttribute("aria-pressed",d.getAttribute("aria-pressed")==="true"?"false":"true")}
+});
+let simTimer=null;
+function speak(text){
+  const done=()=>{face.simTalk(false);$("#tutorState").textContent="mendengarkan"};
+  clearTimeout(simTimer); face.simTalk(true); $("#tutorState").textContent="berbicara";
+  try{
+    speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=Math.min(1,LEVELS.find(l=>l.id===profile.level).speed);
+    const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));const fem=(TUTORS[profile.tutor||"maya"]||{}).female;
+    const pickV=vs.find(v=>fem?/female|samantha|zira|aria|jenny|google us english/i.test(v.name):/male|daniel|david|guy|alex/i.test(v.name)&&!/female/i.test(v.name));if(pickV)u.voice=pickV;
+    u.onend=done;u.onerror=done;speechSynthesis.speak(u);
+    simTimer=setTimeout(done,Math.max(1500,text.length*75));
+    return u;
+  }catch(e){simTimer=setTimeout(done,Math.max(1500,text.length*70));return null}
+}
+
+function setLive(state){
+  const dot=$("#liveDot"); dot.classList.toggle("on",state==="live");
+  $("#liveText").textContent = state==="live"?"Sedang berlangsung":state==="connecting"?"Menghubungkan…":"Belum terhubung";
+  $("#callBtn").disabled = state!=="idle"; $("#endBtn").disabled = state==="idle"; $("#muteBtn").disabled = state!=="live"||IN_ARTIFACT;
+  document.querySelectorAll("[data-tutor]").forEach(b=>b.disabled=state!=="idle");
+  if(state==="idle"){face.level(0);face.simTalk(false);face.listen(0);$("#tutorState").textContent="siap"}
+}
+function caption(who,text){
+  const c=$("#captions"); if(c.querySelector(".sys")&&who!=="sys")c.innerHTML="";
+  const p=document.createElement("p"); p.className=who;
+  if(who==="sys")p.textContent=text; else {const b=document.createElement("b");b.textContent=who==="ai"?"Tutor: ":"Kamu: ";p.append(b,document.createTextNode(text))}
+  c.append(p); c.scrollTop=c.scrollHeight;
+}
+function startClock(){startTime=Date.now();clearInterval(tick);tick=setInterval(()=>{const s=Math.floor((Date.now()-startTime)/1000);$("#timer").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");renderFlow(s);if(s>=420&&$("#wrapup").hidden)showWrap(false)},1000)}
+function vars(){
+  const lvl=LEVELS.find(l=>l.id===profile.level), tr=TRACKS[profile.goal];
+  const idx=flat().findIndex(l=>l.id===current.id)+1;
+  return {tutor_name:TUTORS[profile.tutor||"maya"].name, learner_name:profile.name, level:lvl.en, goal:tr.en, situations:tr.lessons.filter(l=>profile.picks.includes(l.id)).map(l=>l.titleEn).join(", ")||tr.en,
+    bahasa_help:profile.help, lesson_number:String(idx), lesson_title:current.titleEn, lesson_focus:current.focus,
+    key_phrases:current.phrases.map(p=>p[0]).join(" / "), roleplay:current.roleplay};
+}
+
+$("#callBtn").onclick=()=> IN_ARTIFACT ? startTextPractice() : startVoiceCall();
+$("#endBtn").onclick=()=>{endCall();showWrap(true)};
+$("#muteBtn").onclick=()=>{if(!session)return;muted=!muted;try{session.setMicMuted(muted)}catch(e){}$("#muteBtn").textContent=muted?"Nyalakan mic":"Matikan mic"};
+
+/* voice call (standalone app with ElevenLabs) */
+function loadSDK(){return new Promise((res,rej)=>{if(window.ElevenLabsClient)return res(window.ElevenLabsClient);const s=document.createElement("script");s.src=SDK_URL;s.onload=()=>res(window.ElevenLabsClient);s.onerror=()=>rej(new Error("sdk"));document.head.append(s)})}
+async function startVoiceCall(){
+  setLive("connecting"); caption("sys","Menghubungkan ke tutor…");
+  try{
+    const EL=await loadSDK();
+    session=await EL.Conversation.startSession({
+      agentId:AGENT_ID, connectionType:"websocket", dynamicVariables:vars(),
+      overrides:{tts:{speed:LEVELS.find(l=>l.id===profile.level).speed, voiceId:TUTORS[profile.tutor||"maya"].voice}},
+      onConnect(){setLive("live");startClock();$("#captions").innerHTML=""},
+      onDisconnect(){if(session){session=null;setLive("idle");clearInterval(tick);showWrap(false)}},
+      onError(m){caption("sys","Ada gangguan koneksi: "+m)},
+      onMessage(m){caption((m.role||m.source)==="user"?"me":"ai",m.message)},
+      onModeChange({mode}){$("#tutorState").textContent=mode==="speaking"?"berbicara":"mendengarkan";if(mode!=="speaking")face.level(0)}
+    });
+    meter();
+  }catch(e){
+    setLive("idle");
+    caption("sys", e&&e.name==="NotAllowedError" ? "Akses mikrofon ditolak. Izinkan mikrofon di browser lalu coba lagi." : "Tidak bisa terhubung. Periksa internet dan izin mikrofon, lalu coba lagi.");
+  }
+}
+function meter(){if(!session)return;try{const v=session.getInputVolume?session.getInputVolume():0;const o=session.getOutputVolume?session.getOutputVolume():0;$("#selfInitial").style.boxShadow=`0 0 0 ${Math.round(v*18)}px rgba(61,188,159,.35)`;face.level(o*2.4);face.listen(o>0.02?0:v)}catch(e){}requestAnimationFrame(meter)}
+
+/* text practice (inside Claude, powered by sample) */
+function tutorInstructions(){
+  const v=vars();
+  return `You are a friendly, patient English tutor in a private practice session with an Indonesian learner who types their answers.
+Learner: ${v.learner_name}. Level: ${v.level}. Goal: ${v.goal}. Bahasa Indonesia help wanted: ${v.bahasa_help}.
+Today's lesson (step ${v.lesson_number}): ${v.lesson_title}. Practice: ${v.lesson_focus}. Key phrases on their screen: ${v.key_phrases}. Role-play: ${v.roleplay}.
+Run the session: warm up with one easy question, teach the key phrases one or two at a time and ask them to type them, then run the role-play where you play the other person, then wrap up with two specific praises and one phrase to remember.
+Rules: reply in 1 to 3 short sentences. Never say "wrong"; recast mistakes gently by repeating their idea correctly, then continue. If they write in Bahasa Indonesia or say "bantu", give the English version simply and ask them to try. Use a little Bahasa only as their help preference allows. Plain text only, no markdown. Names, companies and numbers in role-play are made up.`;
+}
+async function askTutor(userText){
+  const sample=await samplePromise;
+  if(!sample){caption("sys","Tutor AI belum tersedia di tampilan ini.");return}
+  if(userText!==null)textHistory.push({role:"user",content:userText});
+  const convo=[{role:"user",content:tutorInstructions()+"\n\nStart the session now with a warm greeting using their name."}];
+  for(const m of textHistory){convo.push(m)}
+  if(convo[convo.length-1].role!=="user")convo.push({role:"user",content:"(continue)"});
+  $("#tutorState").textContent="berpikir…";
+  const p=document.createElement("p");p.className="ai";const b=document.createElement("b");b.textContent="Tutor: ";const span=document.createElement("span");span.textContent="…";p.append(b,span);
+  const c=$("#captions");if(c.querySelector(".sys"))c.innerHTML="";c.append(p);
+  try{
+    const r=await sample(convo,{cache:false,modelTier:"quick",onText:({text})=>{span.textContent=text;c.scrollTop=c.scrollHeight}});
+    const text=(r.text||"").trim(); span.textContent=text;
+    textHistory.push({role:"assistant",content:text});
+    speak(text);
+  }catch(err){
+    span.textContent = err&&err.code==="rate_limited"?"(Tutor sedang sibuk. Tunggu sebentar lalu kirim lagi.)":err&&err.code==="not_granted"?"(Izin AI ditolak, jadi tutor tidak bisa membalas di sini.)":"(Tutor tidak bisa membalas. Coba kirim lagi.)";
+    $("#tutorState").textContent="mendengarkan";
+  }
+}
+async function startTextPractice(){
+  textHistory=[];setLive("live");startClock();$("#typeBox").hidden=false;$("#typeInput").focus();
+  session={text:true};await askTutor(null);
+}
+$("#typeBox").addEventListener("submit",e=>{e.preventDefault();const v=$("#typeInput").value.trim();if(!v||!session)return;$("#typeInput").value="";caption("me",v);askTutor(v)});
+
+/* helper buttons */
+const HELP_MSG={slow:"Please speak more slowly and use simpler words.",help:"Bantu saya. I'm stuck, please give me a starter phrase.",repeat:"Sorry, could you say that again?",bahasa:"Tolong jelaskan pakai Bahasa Indonesia sebentar."};
+document.querySelectorAll("[data-help]").forEach(b=>b.onclick=()=>{
+  const k=b.dataset.help;
+  if(session&&session.text){caption("me",HELP_MSG[k]);askTutor(HELP_MSG[k]);return}
+  if(session&&session.sendUserMessage){try{session.sendUserMessage(HELP_MSG[k]);caption("me",HELP_MSG[k])}catch(e){}return}
+  caption("sys","Mulai call dulu, lalu tombol bantuan bisa dipakai kapan saja.");
+});
+
+let camStream=null;
+async function toggleCam(force){
+  const on = force!==undefined ? force : !camStream;
+  if(!on){ if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null} $("#selfVideo").hidden=true;$("#selfInitial").hidden=false;$("#camBtn").textContent="Nyalakan kamera";return }
+  try{ camStream=await navigator.mediaDevices.getUserMedia({video:{width:320,height:240},audio:false});
+    const v=$("#selfVideo"); v.srcObject=camStream; v.hidden=false; await v.play().catch(()=>{}); $("#selfInitial").hidden=true; $("#camBtn").textContent="Matikan kamera";
+  }catch(e){ camStream=null; $("#camBtn").textContent="Kamera tidak tersedia"; $("#camBtn").disabled=true; }
+}
+$("#camBtn").onclick=()=>toggleCam();
+if(IN_ARTIFACT){$("#camBtn").hidden=true}
+function endCall(){
+  clearInterval(tick); try{speechSynthesis.cancel()}catch(e){}
+  const s=session; session=null; $("#typeBox").hidden=true;
+  if(s&&s.endSession){try{s.endSession()}catch(e){}}
+  setLive("idle"); toggleCam(false);
+}
+function showWrap(markDone){
+  if(!current)return;
+  if(!done.includes(current.id)){done=[...done,current.id];save("tb.done",done)}
+  const said=document.querySelectorAll('[data-said][aria-pressed="true"]').length;
+  $("#wrapText").textContent = `Kamu berlatih ${current.phrases.length} frasa${said?`, dan sudah mengucapkan ${said} di antaranya`:""}. Langkah berikutnya sudah terbuka.`;
+  $("#wrapup").hidden=false;
+}
+$("#nextLesson").onclick=()=>{endCall();const n=nextLessonObj();if(n)openLesson(n.id)};
+
+renderHome();
+</script>
+</body></html>
